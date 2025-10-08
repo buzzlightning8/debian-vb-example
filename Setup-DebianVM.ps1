@@ -68,13 +68,6 @@ function Get-EnvConfig {
     return $config
 }
 
-# Check if running as Administrator
-function Test-Administrator {
-    $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
-    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
-
 # Comprehensive preflight checks
 function Test-Prerequisites {
     param([hashtable]$Config)
@@ -82,16 +75,7 @@ function Test-Prerequisites {
     Write-Step "Running preflight checks..."
     $allChecksPassed = $true
     
-    # Check 1: Administrator privileges
-    Write-Info "Checking administrator privileges..."
-    if (-not (Test-Administrator)) {
-        Write-Error-Custom "✗ Administrator privileges required"
-        $allChecksPassed = $false
-    } else {
-        Write-Success "✓ Running as Administrator"
-    }
-    
-    # Check 2: VirtualBox installation
+    # Check 1: VirtualBox installation
     Write-Info "Checking VirtualBox installation..."
     $vboxPath = "${env:ProgramFiles}\Oracle\VirtualBox\VBoxManage.exe"
     $vboxPath32 = "${env:ProgramFiles(x86)}\Oracle\VirtualBox\VBoxManage.exe"
@@ -103,7 +87,7 @@ function Test-Prerequisites {
         $allChecksPassed = $false
     }
     
-    # Check 3: .env file exists
+    # Check 2: .env file exists
     Write-Info "Checking configuration file..."
     if (Test-Path ".env") {
         Write-Success "✓ Configuration file (.env) found"
@@ -112,16 +96,7 @@ function Test-Prerequisites {
         $allChecksPassed = $false
     }
     
-    # Check 4: preseed.cfg file exists
-    Write-Info "Checking preseed configuration..."
-    if (Test-Path "preseed.cfg") {
-        Write-Success "✓ Preseed configuration found"
-    } else {
-        Write-Error-Custom "✗ preseed.cfg not found"
-        $allChecksPassed = $false
-    }
-    
-    # Check 5: Internet connectivity
+    # Check 3: Internet connectivity
     Write-Info "Checking internet connectivity..."
     try {
         $testConnection = Test-NetConnection -ComputerName "deb.debian.org" -Port 80 -WarningAction SilentlyContinue -ErrorAction Stop -InformationLevel Quiet
@@ -136,7 +111,7 @@ function Test-Prerequisites {
         $allChecksPassed = $false
     }
     
-    # Check 6: Disk space
+    # Check 4: Disk space
     Write-Info "Checking disk space..."
     $workDir = $Config['WORK_DIR']
     if (-not $workDir) { $workDir = "vm-setup" }
@@ -156,7 +131,7 @@ function Test-Prerequisites {
         }
     }
     
-    # Check 7: Memory availability
+    # Check 5: Memory availability
     Write-Info "Checking system memory..."
     $computerSystem = Get-CimInstance -ClassName Win32_ComputerSystem
     $totalMemoryGB = [math]::Round($computerSystem.TotalPhysicalMemory / 1GB, 2)
@@ -169,7 +144,7 @@ function Test-Prerequisites {
         $allChecksPassed = $false
     }
     
-    # Check 8: Port availability
+    # Check 6: Port availability
     Write-Info "Checking SSH port availability..."
     $sshPort = [int]$Config['VM_SSH_PORT']
     try {
@@ -184,7 +159,7 @@ function Test-Prerequisites {
         Write-Success "✓ Port $sshPort is available"
     }
     
-    # Check 9: Hyper-V conflict check
+    # Check 7: Hyper-V conflict check
     Write-Info "Checking for Hyper-V conflicts..."
     try {
         $hyperv = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -ErrorAction SilentlyContinue
@@ -199,7 +174,7 @@ function Test-Prerequisites {
         Write-Info "  Could not check Hyper-V status (this is OK)"
     }
     
-    # Check 10: Configuration validation
+    # Check 8: Configuration validation
     Write-Info "Validating configuration values..."
     $configValid = $true
     
