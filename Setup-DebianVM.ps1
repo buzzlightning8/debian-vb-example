@@ -80,7 +80,7 @@ function Test-Prerequisites {
     $vboxPath = "${env:ProgramFiles}\Oracle\VirtualBox\VBoxManage.exe"
     $vboxPath32 = "${env:ProgramFiles(x86)}\Oracle\VirtualBox\VBoxManage.exe"
     if ((Test-Path $vboxPath) -or (Test-Path $vboxPath32)) {
-        $vboxVersion = & $vboxPath --version 2>$null
+        $vboxVersion = & $vboxPath --version 2>&1 | Select-Object -First 1
         Write-Success "✓ VirtualBox installed: $vboxVersion"
     } else {
         Write-Error-Custom "✗ VirtualBox not found. Install from Company Portal."
@@ -130,7 +130,7 @@ function Test-Prerequisites {
             $allChecksPassed = $false
         }
     }
-    
+
     # Check 5: Memory availability
     Write-Info "Checking system memory..."
     $computerSystem = Get-CimInstance -ClassName Win32_ComputerSystem
@@ -143,7 +143,7 @@ function Test-Prerequisites {
         Write-Error-Custom "✗ Insufficient memory: ${totalMemoryGB}GB total, need at least $($vmMemoryGB + 2)GB"
         $allChecksPassed = $false
     }
-    
+
     # Check 6: Port availability
     Write-Info "Checking SSH port availability..."
     $sshPort = [int]$Config['VM_SSH_PORT']
@@ -158,7 +158,7 @@ function Test-Prerequisites {
     } catch {
         Write-Success "✓ Port $sshPort is available"
     }
-    
+
     # Check 7: Hyper-V conflict check
     Write-Info "Checking for Hyper-V conflicts..."
     try {
@@ -173,7 +173,7 @@ function Test-Prerequisites {
     } catch {
         Write-Info "  Could not check Hyper-V status (this is OK)"
     }
-    
+
     # Check 8: Configuration validation
     Write-Info "Validating configuration values..."
     $configValid = $true
@@ -335,7 +335,7 @@ function New-DebianVM {
         $existingVM = & $VBoxManage list vms | Select-String -Pattern "^`"$Name`""
         if ($existingVM) {
             Write-Info "Removing existing VM '$Name'..."
-            & $VBoxManage controlvm $Name poweroff 2>$null
+            & $VBoxManage controlvm $Name poweroff 2>&1 | Out-Null
             Start-Sleep -Seconds 2
             & $VBoxManage unregistervm $Name --delete
             Start-Sleep -Seconds 2
