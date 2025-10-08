@@ -354,7 +354,7 @@ function New-DebianVM {
         & $VBoxManage modifyvm $Name --nic2 nat
         & $VBoxManage modifyvm $Name --audio none
         & $VBoxManage modifyvm $Name --boot1 dvd --boot2 disk --boot3 none --boot4 none
-        & $VBoxManage modifyvm $Name --natpf2 "ssh,tcp,,$SSHPort,,22"
+        & $VBoxManage modifyvm $Name --natpf2 "ssh,tcp,,${SSHPort},,22"
         
         # Create and attach hard disk
         Write-Info "Creating virtual hard disk..."
@@ -467,7 +467,7 @@ function Invoke-VMCommand {
         [string]$Command
     )
     
-    $result = & $VBoxManage guestcontrol $VMName run --exe "/bin/bash" --username $VMUser --password $VMPassword --wait-stdout --wait-stderr -- bash -c $Command 2>&1
+    $result = & $VBoxManage guestcontrol $VMName run --exe '/bin/bash' --username $VMUser --password $VMPassword --wait-stdout --wait-stderr -- bash -c $Command 2>&1
     return $result
 }
 
@@ -521,7 +521,7 @@ function Install-Docker {
     foreach ($cmd in $commands) {
         Write-Info "Executing: $cmd"
         try {
-            & $VBoxManage guestcontrol $VMName run --exe "/bin/bash" --username "root" --password $VMPassword --wait-stdout --wait-stderr -- bash -c $cmd
+            & $VBoxManage guestcontrol $VMName run --exe '/bin/bash' --username 'root' --password $VMPassword --wait-stdout --wait-stderr -- bash -c $cmd
         }
         catch {
             Write-Info "Command completed (some warnings are normal)"
@@ -652,7 +652,7 @@ function Main {
         
     }
     catch {
-        Write-Error-Custom "Setup failed: $_"
+        Write-Error-Custom "Setup failed: $($_.Exception.Message)"
         Write-Host $_.ScriptStackTrace -ForegroundColor Red
         exit 1
     }
